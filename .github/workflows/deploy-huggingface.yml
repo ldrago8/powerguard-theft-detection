@@ -1,0 +1,22 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config user.name "Sahil Jamal"
+          git config user.email "ldrago8@users.noreply.github.com"
+          git remote add huggingface https://Ldrago8:${HF_TOKEN}@huggingface.co/spaces/Ldrago8/powerguard-theft-detection
+          git push huggingface main --force
