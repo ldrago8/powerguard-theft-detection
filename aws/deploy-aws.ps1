@@ -30,7 +30,14 @@ try {
 }
 
 $templatePath = Join-Path $PSScriptRoot "cloudformation.yaml"
-$params = @("InstanceType=t2.micro")
+
+$vpcId = aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" --query "Vpcs[0].VpcId" --output text --region $Region
+if (-not $vpcId -or $vpcId -eq "None") {
+    Write-Host "ERROR: No default VPC found in $Region. Create one or pass VpcId manually." -ForegroundColor Red
+    exit 1
+}
+
+$params = @("InstanceType=t3.micro", "VpcId=$vpcId")
 if ($KeyPairName) { $params += "KeyPairName=$KeyPairName" }
 
 Write-Host ""
