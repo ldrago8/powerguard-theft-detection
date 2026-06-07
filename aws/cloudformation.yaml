@@ -114,16 +114,18 @@ Resources:
         - Key: Project
           Value: BCS223210-CloudComputing
         - Key: DeploymentVersion
-          Value: v3-native-python
+          Value: v4-docker-fixed
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
           exec > /var/log/powerguard-setup.log 2>&1
           set -x
 
-          echo "=== PowerGuard AWS Setup v3 (native Python) ==="
+          echo "=== PowerGuard AWS Setup v4 (Docker) ==="
           dnf update -y
-          dnf install -y python3 python3-pip git
+          dnf install -y docker git
+          systemctl enable docker
+          systemctl start docker
 
           fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048
           chmod 600 /swapfile
@@ -136,43 +138,21 @@ Resources:
           git clone ${GitHubRepo} app
           cd app
 
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt
-
-          export DEPLOYMENT_ENV=cloud
-          export POWERGUARD_STORAGE=/tmp/powerguard-storage
-          export PYTHONUTF8=1
-
-          if [ ! -f ml/artifacts/theft_detection_model.pkl ]; then
-            python3 ml/train_model.py
-          fi
+          docker build -t powerguard:latest .
+          docker rm -f powerguard 2>/dev/null || true
+          docker run -d \
+            --name powerguard \
+            --restart unless-stopped \
+            -p 80:7860 \
+            -e DEPLOYMENT_ENV=cloud \
+            -e POWERGUARD_STORAGE=/tmp/powerguard-storage \
+            -e AWS_S3_BUCKET=${PowerGuardBucket} \
+            -e PORT=7860 \
+            powerguard:latest
 
           aws s3 cp data/electricity_consumption.csv s3://${PowerGuardBucket}/data/electricity_consumption.csv || true
-          aws s3 cp ml/artifacts/theft_detection_model.pkl s3://${PowerGuardBucket}/ml/theft_detection_model.pkl 2>/dev/null || true
-
-          printf '%s\n' \
-            '[Unit]' \
-            'Description=PowerGuard Electricity Theft Detection' \
-            'After=network.target' \
-            '' \
-            '[Service]' \
-            'Type=simple' \
-            'WorkingDirectory=/opt/powerguard/app' \
-            'Environment=DEPLOYMENT_ENV=cloud' \
-            'Environment=POWERGUARD_STORAGE=/tmp/powerguard-storage' \
-            'Environment=PYTHONUTF8=1' \
-            'Environment=AWS_S3_BUCKET=${PowerGuardBucket}' \
-            'ExecStart=/usr/bin/python3 -m uvicorn backend.app:app --host 0.0.0.0 --port 80' \
-            'Restart=always' \
-            'RestartSec=10' \
-            '' \
-            '[Install]' \
-            'WantedBy=multi-user.target' \
-            > /etc/systemd/system/powerguard.service
-
-          systemctl daemon-reload
-          systemctl enable powerguard
-          systemctl start powerguard
+          docker cp powerguard:/app/ml/artifacts/theft_detection_model.pkl /tmp/model.pkl 2>/dev/null || true
+          aws s3 cp /tmp/model.pkl s3://${PowerGuardBucket}/ml/theft_detection_model.pkl 2>/dev/null || true
 
           echo "=== PowerGuard AWS Setup Complete ==="
 
