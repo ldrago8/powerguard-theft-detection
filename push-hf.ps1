@@ -15,9 +15,26 @@ Set-Location $PSScriptRoot
 
 Write-Host "Deploying to Hugging Face Space..." -ForegroundColor Cyan
 
+$hfRemote = "https://Ldrago8:$Token@huggingface.co/spaces/Ldrago8/powerguard-theft-detection"
+$currentBranch = git branch --show-current
+
+Write-Host "Creating HF deploy branch (excludes PDF binaries)..." -ForegroundColor Yellow
+git checkout --orphan hf-deploy 2>$null
+if ($LASTEXITCODE -ne 0) { git checkout hf-deploy; git reset --soft HEAD~1 2>$null; git reset }
+
+if (-not (Select-String -Path .gitignore -Pattern '^\*\.pdf$' -Quiet)) {
+    Add-Content .gitignore "`n# HF deploy - no binary PDFs`n*.pdf`n"
+}
+git add -A
+git rm --cached -f "BCS223210 Sahil Jamal.pdf" 2>$null
+git -c user.name="Sahil Jamal" -c user.email="ldrago8@users.noreply.github.com" commit -m "PowerGuard Electricity Theft Detection - Cloud deployment" 2>$null
+
 git remote remove huggingface 2>$null
-git remote add huggingface "https://Ldrago8:$Token@huggingface.co/spaces/Ldrago8/powerguard-theft-detection"
-git push huggingface main --force
+git remote add huggingface $hfRemote
+git push huggingface hf-deploy:main --force
+
+git checkout $currentBranch 2>$null
+Write-Host "Returned to branch: $currentBranch" -ForegroundColor Gray
 
 Write-Host ""
 Write-Host "SUCCESS! Your app is building on cloud." -ForegroundColor Green
