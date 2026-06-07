@@ -1,5 +1,6 @@
 """SQLite database layer for consumer records and prediction history."""
 
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -7,8 +8,20 @@ from typing import Any
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = ROOT / "storage" / "consumers.db"
 DATASET_PATH = ROOT / "data" / "electricity_consumption.csv"
+
+
+def get_storage_dir() -> Path:
+    """Writable storage path (HF Spaces /app is read-only at runtime)."""
+    if custom := os.environ.get("POWERGUARD_STORAGE"):
+        return Path(custom)
+    if os.environ.get("DEPLOYMENT_ENV") == "cloud":
+        return Path("/tmp/powerguard-storage")
+    return ROOT / "storage"
+
+
+STORAGE_DIR = get_storage_dir()
+DB_PATH = STORAGE_DIR / "consumers.db"
 
 CONSUMER_COLUMNS = [
     "consumer_id", "full_name", "cnic", "phone", "email", "address", "city", "region",

@@ -7,7 +7,6 @@ from backend.database import DB_PATH, DATASET_PATH, get_connection
 ROOT = Path(__file__).resolve().parent.parent
 MODEL_PATH = ROOT / "ml" / "artifacts" / "theft_detection_model.pkl"
 METRICS_PATH = ROOT / "ml" / "artifacts" / "model_metrics.json"
-STORAGE_DIR = ROOT / "storage"
 
 
 def _file_size_mb(path: Path) -> float:
@@ -35,7 +34,7 @@ def get_storage_stats() -> dict:
         ),
         "dataset_columns": 33,
         "dataset_path": "data/electricity_consumption.csv",
-        "database_path": "storage/consumers.db",
+        "database_path": str(DB_PATH),
         "model_path": "ml/artifacts/theft_detection_model.pkl",
     }
 
