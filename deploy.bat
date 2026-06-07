@@ -1,26 +1,22 @@
 @echo off
 echo ============================================
-echo  FREE Cloud Deploy - NO CREDIT CARD
-echo  Hugging Face Spaces
+echo  PowerGuard - AWS Cloud Deployment
 echo ============================================
 echo.
-echo Render asks for card. Use Hugging Face instead:
+echo AWS Services: EC2 + S3 + IAM + Security Group
 echo.
-echo 1. Sign up: https://huggingface.co/join
-echo 2. Create Space: https://huggingface.co/new-space
-echo    - Name: powerguard-theft-detection
-echo    - SDK: Docker
-echo    - Hardware: CPU basic (free)
+echo STEP 1: Create AWS account (free tier)
+echo   https://aws.amazon.com/free
 echo.
-echo 3. Get token: https://huggingface.co/settings/tokens
+echo STEP 2: Create IAM access keys
+echo   AWS Console - IAM - Users - Security credentials
 echo.
-echo 4. Run these commands (replace YOUR_USERNAME):
+echo STEP 3: Configure AWS CLI
+echo   aws configure
+echo   Region: us-east-1
 echo.
-echo    cd "%~dp0"
-echo    git remote add huggingface https://huggingface.co/spaces/YOUR_USERNAME/powerguard-theft-detection
-echo    git push huggingface main
+echo STEP 4: Deploy
+echo   powershell -ExecutionPolicy Bypass -File aws\deploy-aws.ps1
 echo.
-echo    Password = paste your HF token
-echo.
-echo Full guide: DEPLOY.md
+echo Full guide: docs\DEPLOY_AWS.md
 pause

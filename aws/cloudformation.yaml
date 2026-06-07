@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  PowerGuard - Cloud-Based Electricity Theft Detection System.
+  Deploys EC2 (compute), S3 (storage), IAM (security), Security Group (networking).
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t3.micro]
+    Description: EC2 instance type (t2.micro is AWS Free Tier eligible)
+
+  KeyPairName:
+    Type: String
+    Default: ""
+    Description: Optional EC2 key pair for SSH access (leave empty if none)
+
+  GitHubRepo:
+    Type: String
+    Default: https://github.com/ldrago8/powerguard-theft-detection.git
+
+Conditions:
+  HasKeyPair: !Not [!Equals [!Ref KeyPairName, ""]]
+
+Resources:
+  PowerGuardBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  PowerGuardRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PowerGuardS3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt PowerGuardBucket.Arn
+                  - !Sub "${PowerGuardBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource:
+                  - !Sub "${PowerGuardBucket.Arn}/*"
+
+  PowerGuardInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref PowerGuardRole
+
+  PowerGuardSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PowerGuard web application access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access for dashboard
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+          Description: FastAPI direct access
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  PowerGuardEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref PowerGuardInstanceProfile
+      SecurityGroupIds:
+        - !Ref PowerGuardSecurityGroup
+      KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref "AWS::NoValue"]
+      Tags:
+        - Key: Name
+          Value: PowerGuard-Theft-Detection
+        - Key: Project
+          Value: BCS223210-CloudComputing
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/powerguard-setup.log 2>&1
+
+          echo "=== PowerGuard AWS Setup Started ==="
+          dnf update -y
+          dnf install -y docker git
+          systemctl enable docker
+          systemctl start docker
+
+          # Add swap for Docker ML build on t2.micro (1GB RAM)
+          fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+
+          mkdir -p /opt/powerguard
+          cd /opt/powerguard
+          git clone ${GitHubRepo} app
+          cd app
+
+          docker build -t powerguard:latest .
+          docker run -d \
+            --name powerguard \
+            --restart unless-stopped \
+            -p 80:7860 \
+            -e DEPLOYMENT_ENV=aws-cloud \
+            -e AWS_S3_BUCKET=${PowerGuardBucket} \
+            -e PORT=7860 \
+            powerguard:latest
+
+          # Upload dataset to S3 for cloud storage demo
+          aws s3 cp data/electricity_consumption.csv s3://${PowerGuardBucket}/data/electricity_consumption.csv || true
+          aws s3 cp ml/artifacts/theft_detection_model.pkl s3://${PowerGuardBucket}/ml/theft_detection_model.pkl 2>/dev/null || true
+
+          echo "=== PowerGuard AWS Setup Complete ==="
+
+Outputs:
+  ApplicationURL:
+    Description: Open this URL in your browser (wait 5-10 min after stack creation)
+    Value: !Sub "http://${PowerGuardEC2.PublicIp}"
+
+  EC2InstanceId:
+    Description: EC2 Instance ID (Cloud Compute)
+    Value: !Ref PowerGuardEC2
+
+  EC2PublicIP:
+    Description: EC2 Public IP Address
+    Value: !GetAtt PowerGuardEC2.PublicIp
+
+  S3BucketName:
+    Description: S3 Bucket for dataset and model storage (Cloud Storage)
+    Value: !Ref PowerGuardBucket
+
+  SecurityGroupId:
+    Description: Security Group controlling network access
+    Value: !Ref PowerGuardSecurityGroup
+
+  IAMRoleArn:
+    Description: IAM Role for EC2 to access S3 (System Integration)
+    Value: !GetAtt PowerGuardRole.Arn
+
+  ArchitectureSummary:
+    Description: AWS services used in this deployment
+    Value: "EC2 (Compute) + S3 (Storage) + IAM (Security) + VPC/SG (Networking) + CloudWatch (Logs)"

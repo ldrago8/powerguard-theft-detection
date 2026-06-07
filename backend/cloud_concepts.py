@@ -8,9 +8,14 @@ def get_deployment_status() -> dict:
     env = os.getenv("DEPLOYMENT_ENV", "local")
     is_hf = bool(os.getenv("SPACE_ID") or os.getenv("SPACE_TITLE"))
     is_render = os.getenv("RENDER") == "true" or bool(os.getenv("RENDER_SERVICE_ID"))
-    is_cloud = env != "local" or is_hf or is_render
+    is_aws = env == "aws-cloud" or bool(os.getenv("AWS_S3_BUCKET") or os.getenv("AWS_EXECUTION_ENV"))
+    is_cloud = env != "local" or is_hf or is_render or is_aws
 
-    if is_hf:
+    if is_aws:
+        platform = "Amazon Web Services (EC2 + S3 + IAM)"
+        bucket = os.getenv("AWS_S3_BUCKET", "")
+        service_url = os.getenv("APP_URL", f"http://EC2-Public-IP (S3: {bucket})" if bucket else "AWS Cloud")
+    elif is_hf:
         space = os.getenv("SPACE_ID", "powerguard-theft-detection")
         platform = f"Hugging Face Spaces — {space}"
         service_url = os.getenv("SPACE_HOST", f"https://huggingface.co/spaces/{space}")
@@ -60,10 +65,16 @@ def get_course_cloud_concepts() -> dict:
                         "verdict": "Best for corporate environments",
                     },
                     {
-                        "option": "Hugging Face Spaces + Docker (SELECTED)",
-                        "pros": ["Completely free", "No credit card required", "Docker-native", "16GB RAM free tier", "Perfect for ML projects", "Public URL for presentation"],
-                        "cons": ["Sleeps when idle", "Storage not persistent on free tier"],
-                        "verdict": "SELECTED — best free option without credit card",
+                        "option": "AWS EC2 + S3 + IAM (SELECTED)",
+                        "pros": ["Industry standard cloud", "EC2 free tier 12 months", "S3 cloud storage", "IAM security", "Best for semester presentation", "Sir expects AWS/GCP/Azure"],
+                        "cons": ["Credit card required for account verification", "More setup than Hugging Face"],
+                        "verdict": "SELECTED — primary deployment for Cloud Computing course",
+                    },
+                    {
+                        "option": "Hugging Face Spaces + Docker",
+                        "pros": ["Completely free", "No credit card required", "Docker-native", "16GB RAM free tier"],
+                        "cons": ["Sleeps when idle", "Less recognized as enterprise cloud"],
+                        "verdict": "Alternative for quick demo without AWS account",
                     },
                     {
                         "option": "Render.com + Docker",
@@ -77,14 +88,13 @@ def get_course_cloud_concepts() -> dict:
             "economic_structure": {
                 "title": "2. Economic Structure — Cost Analysis",
                 "cost_breakdown": [
-                    {"service": "Render Web Service (Free)", "cost_usd": "$0/month", "usage": "750 hours/month, 512 MB RAM, shared CPU"},
-                    {"service": "Docker Container Hosting", "cost_usd": "$0/month", "usage": "Included in Render free tier"},
-                    {"service": "Cloud Storage (Dataset 4.5 MB + Model)", "cost_usd": "$0/month", "usage": "Persistent disk on Render / local for dev"},
-                    {"service": "SQLite Database", "cost_usd": "$0/month", "usage": "Embedded — no separate DB cost on free tier"},
-                    {"service": "GitHub Repository", "cost_usd": "$0/month", "usage": "Public repo for CI/CD source control"},
-                    {"service": "Domain Name (optional)", "cost_usd": "$0–12/year", "usage": "Render provides free .onrender.com subdomain"},
+                    {"service": "EC2 t2.micro (Free Tier)", "cost_usd": "$0/month", "usage": "750 hours/month for 12 months — runs Docker app"},
+                    {"service": "S3 Standard Storage", "cost_usd": "$0/month", "usage": "5 GB free — stores dataset + ML model"},
+                    {"service": "IAM Roles & Policies", "cost_usd": "$0", "usage": "EC2 role for secure S3 access"},
+                    {"service": "CloudFormation", "cost_usd": "$0", "usage": "Infrastructure as Code deployment"},
+                    {"service": "Data Transfer", "cost_usd": "$0", "usage": "15 GB outbound free/month"},
                 ],
-                "total_monthly_cost": "$0 (Free Tier)",
+                "total_monthly_cost": "$0 (AWS Free Tier — first 12 months)",
                 "cost_if_scaled": {
                     "100k_consumers_aws": "~$25–50/month (EC2 t3.small + S3 + RDS db.t3.micro)",
                     "1m_consumers_aws": "~$200–500/month (Auto-scaling EC2 + S3 + RDS + Lambda)",
@@ -241,19 +251,19 @@ def get_course_cloud_concepts() -> dict:
             "deployment_phase": {
                 "title": "8. Deployment Phase",
                 "steps": [
-                    "1. Code pushed to GitHub public repository",
-                    "2. Render.com connected to GitHub repo via webhook",
-                    "3. Docker image built automatically (pip install + dataset + ML training)",
-                    "4. Container deployed to Render Linux VM (Singapore region)",
-                    "5. Health check verified at /api/health",
-                    "6. Public URL assigned: https://powerguard-theft-detection.onrender.com",
-                    "7. Dashboard accessible remotely by examiner / distribution company",
+                    "1. AWS account created with Free Tier access",
+                    "2. IAM access keys configured for AWS CLI",
+                    "3. CloudFormation stack deploys EC2 + S3 + IAM + Security Group",
+                    "4. EC2 UserData installs Docker, clones GitHub repo, builds image",
+                    "5. Container runs on port 80 — FastAPI + ML + Dashboard",
+                    "6. Dataset and model uploaded to S3 bucket automatically",
+                    "7. Public IP URL accessible worldwide for presentation",
                 ],
                 "environments": [
                     {"env": "Development", "url": "http://127.0.0.1:8000", "purpose": "Local testing via run.bat"},
-                    {"env": "Cloud Production", "url": "https://powerguard-theft-detection.onrender.com", "purpose": "Public demo for presentation"},
+                    {"env": "AWS Production", "url": "http://EC2-Public-IP (from CloudFormation output)", "purpose": "EC2 + S3 cloud deployment for presentation"},
                 ],
-                "cicd": "GitHub push → Render auto-build → Docker deploy → Health check → Live",
+                "cicd": "CloudFormation IaC → EC2 UserData → Docker build → Live on AWS",
             },
             "optimized_architecture": {
                 "title": "9. Optimized Cloud Architecture",
