@@ -1,0 +1,13 @@
+.python/
+venv/
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+storage/*.db
+*.pdf
+.env
+.vscode/
+.idea/
+terminals/
+agent-transcripts/

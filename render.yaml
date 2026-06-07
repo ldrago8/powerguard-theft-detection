@@ -1,0 +1,19 @@
+# Render.com Blueprint — Free Tier Cloud Deployment
+# Connect this repo at https://dashboard.render.com → New → Blueprint
+
+services:
+  - type: web
+    name: powerguard-theft-detection
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: DEPLOYMENT_ENV
+        value: render-cloud
+      - key: PORT
+        value: "8000"
+    autoDeploy: true

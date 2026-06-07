@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PowerGuard | Cloud Electricity Theft Detection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <strong>PowerGuard</strong>
+          <small>Cloud Theft Detection</small>
+        </div>
+      </div>
+
+      <div class="nav-section-label">Main</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
+        <button class="nav-item" data-page="search"><span class="nav-icon">🔍</span> Search Consumers</button>
+        <button class="nav-item" data-page="consumers"><span class="nav-icon">👥</span> All Consumers</button>
+        <button class="nav-item" data-page="analytics"><span class="nav-icon">📈</span> Analytics</button>
+      </nav>
+
+      <div class="nav-section-label">System</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item" data-page="cloud"><span class="nav-icon">☁️</span> Cloud Architecture</button>
+        <button class="nav-item" data-page="data"><span class="nav-icon">🗄️</span> Data Management</button>
+        <button class="nav-item" data-page="models"><span class="nav-icon">🤖</span> ML Models</button>
+        <button class="nav-item" data-page="batch"><span class="nav-icon">📁</span> Batch Analysis</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-dot online"></div>
+        <div>
+          <small>System Online</small>
+          <small id="sidebarRecordCount">15,000 records</small>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Real-time electricity theft monitoring overview</p>
+        </div>
+        <div class="topbar-search-wrap">
+          <form id="globalSearchForm" class="global-search" autocomplete="off">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="globalSearchInput" placeholder="Search by Consumer ID, Name, CNIC, or Meter..." autocomplete="off" />
+            <button type="submit" class="btn primary sm">Search</button>
+            <div id="globalAutocomplete" class="autocomplete-dropdown hidden"></div>
+          </form>
+        </div>
+      </header>
+
+      <main class="content">
+
+        <!-- DASHBOARD -->
+        <section id="page-dashboard" class="page active">
+          <div class="stats-row" id="statsRow"></div>
+          <div class="grid-2">
+            <article class="card">
+              <div class="card-head"><h2>Model Performance</h2><span class="chip" id="modelChip">—</span></div>
+              <div class="metrics-row" id="metricsRow"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><h2>Theft by Region</h2></div>
+              <div class="chart-container"><canvas id="regionChart"></canvas></div>
+            </article>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <div class="card-head"><h2>How to Search</h2></div>
+              <div class="how-to-steps">
+                <div class="how-step"><span class="step-num">1</span><div><strong>Go to Search Consumers</strong><p>Click "Search Consumers" in the sidebar or use the search bar above.</p></div></div>
+                <div class="how-step"><span class="step-num">2</span><div><strong>Enter any identifier</strong><p>Consumer ID (CONS-10001), name (Ahmed Khan), CNIC, or meter number.</p></div></div>
+                <div class="how-step"><span class="step-num">3</span><div><strong>View full profile</strong><p>See personal info, billing, 6-month consumption chart, and AI theft detection.</p></div></div>
+              </div>
+              <button class="btn primary" style="margin-top:16px" onclick="navigateTo('search')">Start Searching →</button>
+            </article>
+            <article class="card">
+              <div class="card-head"><h2>Recent Detections</h2><button class="btn ghost sm" id="refreshHistory">Refresh</button></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Consumer ID</th><th>Region</th><th>Result</th><th>Confidence</th><th>Risk</th></tr></thead>
+                  <tbody id="historyBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- SEARCH CONSUMERS (Primary) -->
+        <section id="page-search" class="page">
+          <article class="card search-hero">
+            <h2>Search Consumer Database</h2>
+            <p class="desc">Search across <strong>15,000 consumer records</strong> stored in the cloud database. Results appear instantly as you type.</p>
+
+            <div class="search-type-tabs" id="searchTypeTabs">
+              <button class="search-tab active" data-type="all">All Fields</button>
+              <button class="search-tab" data-type="id">Consumer ID</button>
+              <button class="search-tab" data-type="name">Name</button>
+              <button class="search-tab" data-type="cnic">CNIC</button>
+              <button class="search-tab" data-type="meter">Meter No.</button>
+            </div>
+
+            <div class="search-box-wrap">
+              <div class="search-box">
+                <span class="search-icon-lg">🔍</span>
+                <input type="text" id="mainSearchInput" placeholder="Type to search... e.g. CONS-10001 or Ahmed Khan" autocomplete="off" />
+                <button type="button" id="mainSearchBtn" class="btn primary lg">Search</button>
+              </div>
+              <div id="mainAutocomplete" class="autocomplete-dropdown main-ac hidden"></div>
+            </div>
+
+            <div class="search-examples">
+              <span>Examples:</span>
+              <button class="chip-btn" data-query="CONS-10001" data-type="id">CONS-10001</button>
+              <button class="chip-btn" data-query="Ahmed" data-type="name">Ahmed</button>
+              <button class="chip-btn" data-query="Khan" data-type="name">Khan</button>
+              <button class="chip-btn" data-query="K-Electric" data-type="all">K-Electric</button>
+              <button class="chip-btn" data-query="Theft" data-type="all">Theft cases</button>
+            </div>
+          </article>
+
+          <!-- Search Results List -->
+          <div id="searchResultsPanel" class="hidden">
+            <div class="results-header">
+              <h3 id="searchResultsTitle">Search Results</h3>
+              <span id="searchResultsCount" class="chip"></span>
+            </div>
+            <div id="searchResultsGrid" class="results-grid"></div>
+            <div class="pagination" id="searchPagination"></div>
+          </div>
+
+          <!-- Full Consumer Detail -->
+          <div id="lookupLoading" class="loading hidden">Loading consumer profile and running ML analysis...</div>
+          <div id="lookupError" class="alert error hidden"></div>
+          <div id="lookupResult" class="hidden"></div>
+        </section>
+
+        <!-- ALL CONSUMERS -->
+        <section id="page-consumers" class="page">
+          <article class="card">
+            <div class="card-head"><h2>Consumer Directory</h2><span class="chip" id="directoryCount">—</span></div>
+            <div class="filters-bar">
+              <input type="text" id="consumerSearch" placeholder="Filter by name, ID, meter, CNIC..." />
+              <select id="filterRegion"><option value="">All Regions</option></select>
+              <select id="filterLabel"><option value="">All Labels</option><option value="Normal">Normal</option><option value="Theft">Theft</option></select>
+              <select id="filterConnection"><option value="">All Types</option><option value="Residential">Residential</option><option value="Commercial">Commercial</option><option value="Industrial">Industrial</option></select>
+              <button class="btn primary" id="applyFilters">Apply Filters</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead><tr><th>Consumer ID</th><th>Name</th><th>Region</th><th>Company</th><th>Type</th><th>Consumption</th><th>Bill</th><th>Label</th><th></th></tr></thead>
+                <tbody id="consumersBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+          </article>
+        </section>
+
+        <!-- ANALYTICS -->
+        <section id="page-analytics" class="page">
+          <div class="stats-row" id="analyticsStats"></div>
+          <div class="grid-2">
+            <article class="card"><div class="card-head"><h2>Regional Distribution</h2></div><div class="chart-container"><canvas id="analyticsRegionChart"></canvas></div></article>
+            <article class="card"><div class="card-head"><h2>Payment Status</h2></div><div class="chart-container"><canvas id="paymentChart"></canvas></div></article>
+          </div>
+          <article class="card"><div class="card-head"><h2>Distribution Companies</h2></div><div id="companyGrid" class="company-grid"></div></article>
+        </section>
+
+        <!-- CLOUD ARCHITECTURE -->
+        <section id="page-cloud" class="page">
+          <div class="page-intro">
+            <h2>Cloud Computing Architecture</h2>
+            <p>Complete cloud implementation covering all course requirements — scalability, elasticity, VMs, cost analysis, and system integration.</p>
+            <div id="deploymentBanner" class="deployment-banner"></div>
+          </div>
+
+          <div class="concept-nav" id="conceptNav">
+            <button class="concept-tab active" data-section="overview">Overview</button>
+            <button class="concept-tab" data-section="designing_phase">Design & Tradeoffs</button>
+            <button class="concept-tab" data-section="economic_structure">Cost Analysis</button>
+            <button class="concept-tab" data-section="data_handling">Data & VMs</button>
+            <button class="concept-tab" data-section="elasticity_scalability">Scalability</button>
+            <button class="concept-tab" data-section="system_integration">Integration</button>
+            <button class="concept-tab" data-section="technical_phase">Technical</button>
+            <button class="concept-tab" data-section="implementation_phase">Implementation</button>
+            <button class="concept-tab" data-section="deployment_phase">Deployment</button>
+            <button class="concept-tab" data-section="optimized_architecture">Architecture</button>
+            <button class="concept-tab" data-section="research_component">Research</button>
+          </div>
+
+          <div id="cloudContent"></div>
+        </section>
+
+        <!-- DATA MANAGEMENT -->
+        <section id="page-data" class="page">
+          <div class="page-intro">
+            <h2>Data Management Pipeline</h2>
+            <p>How electricity consumption data is collected, stored, indexed, processed, and analyzed in the cloud.</p>
+          </div>
+          <div class="stats-row" id="dataStatsRow"></div>
+          <div id="pipelineStages" class="pipeline"></div>
+          <div class="grid-2">
+            <article class="card">
+              <div class="card-head"><h2>Search & Indexing</h2></div>
+              <div id="searchCapabilities"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><h2>Storage Breakdown</h2></div>
+              <div class="chart-container"><canvas id="storageChart"></canvas></div>
+              <div id="storageDetails" class="storage-details"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ML MODELS -->
+        <section id="page-models" class="page">
+          <div class="grid-2">
+            <article class="card">
+              <div class="card-head"><h2>Active Model Metrics</h2></div>
+              <div id="modelDetailMetrics" class="metrics-row"></div>
+              <div class="confusion-matrix" id="confusionMatrix"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><h2>Model Comparison</h2></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+                  <tbody id="comparisonBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- BATCH -->
+        <section id="page-batch" class="page">
+          <article class="card">
+            <h2>Batch CSV Analysis</h2>
+            <p class="desc">Upload CSV to cloud compute for bulk theft detection across thousands of accounts simultaneously.</p>
+            <div class="batch-actions">
+              <a href="/api/download/dataset" class="btn secondary">⬇ Download Dataset (15K records, 4.5 MB)</a>
+              <input type="file" id="csvFile" accept=".csv" />
+              <button id="uploadBtn" class="btn primary">Upload & Analyze</button>
+            </div>
+            <div id="batchProgress" class="loading hidden">Processing on cloud compute...</div>
+            <div id="batchResult" class="result-panel hidden"></div>
+          </article>
+        </section>
+
+      </main>
+    </div>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
