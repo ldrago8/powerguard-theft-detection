@@ -1,3 +1,14 @@
+---
+title: PowerGuard Theft Detection
+emoji: ⚡
+colorFrom: blue
+colorTo: cyan
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # PowerGuard — Cloud-Based Electricity Theft Detection System
 
 **Semester Project · Cloud Computing · BCS223210 Sahil Jamal**  
@@ -20,7 +31,7 @@ Enterprise-grade electricity theft detection platform with **15,000 consumer rec
 | **All Consumers** | Search, filter, paginate through entire database |
 | **Analytics** | Regional breakdown, payment status, company distribution |
 | **Batch Analysis** | Upload CSV for bulk theft detection |
-| **Cloud Ready** | Docker + Render.com free deployment |
+| **Cloud Ready** | Docker + Hugging Face Spaces (free, no credit card) |
 
 ## Quick Start
 

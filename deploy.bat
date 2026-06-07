@@ -1,26 +1,26 @@
 @echo off
 echo ============================================
-echo  PowerGuard Cloud Deployment Helper
+echo  FREE Cloud Deploy - NO CREDIT CARD
+echo  Hugging Face Spaces
 echo ============================================
 echo.
-echo This project is ready for FREE cloud deployment.
+echo Render asks for card. Use Hugging Face instead:
 echo.
-echo STEP 1: Upload to GitHub
-echo   - Go to https://github.com/new
-echo   - Create repo: powerguard-theft-detection
-echo   - Upload all project files (skip .python and storage folders)
+echo 1. Sign up: https://huggingface.co/join
+echo 2. Create Space: https://huggingface.co/new-space
+echo    - Name: powerguard-theft-detection
+echo    - SDK: Docker
+echo    - Hardware: CPU basic (free)
 echo.
-echo STEP 2: Deploy on Render.com
-echo   - Go to https://render.com (sign up with GitHub)
-echo   - New Web Service - connect your repo
-echo   - Runtime: Docker, Plan: Free
-echo   - Health Check: /api/health
-echo   - Deploy!
+echo 3. Get token: https://huggingface.co/settings/tokens
 echo.
-echo STEP 3: Your live URL will be:
-echo   https://powerguard-theft-detection.onrender.com
+echo 4. Run these commands (replace YOUR_USERNAME):
 echo.
-echo Full guide: see DEPLOY.md
-echo Report content: see docs/CLOUD_REPORT.md
+echo    cd "%~dp0"
+echo    git remote add huggingface https://huggingface.co/spaces/YOUR_USERNAME/powerguard-theft-detection
+echo    git push huggingface main
 echo.
+echo    Password = paste your HF token
+echo.
+echo Full guide: DEPLOY.md
 pause

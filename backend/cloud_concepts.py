@@ -6,17 +6,27 @@ from datetime import datetime
 
 def get_deployment_status() -> dict:
     env = os.getenv("DEPLOYMENT_ENV", "local")
-    is_cloud = env != "local" or os.getenv("RENDER") == "true" or bool(os.getenv("RENDER_SERVICE_ID"))
-    platform = "Render.com Cloud" if is_cloud else "Local Development"
-    if os.getenv("RENDER_SERVICE_NAME"):
-        platform = f"Render.com — {os.getenv('RENDER_SERVICE_NAME')}"
+    is_hf = bool(os.getenv("SPACE_ID") or os.getenv("SPACE_TITLE"))
+    is_render = os.getenv("RENDER") == "true" or bool(os.getenv("RENDER_SERVICE_ID"))
+    is_cloud = env != "local" or is_hf or is_render
+
+    if is_hf:
+        space = os.getenv("SPACE_ID", "powerguard-theft-detection")
+        platform = f"Hugging Face Spaces — {space}"
+        service_url = os.getenv("SPACE_HOST", f"https://huggingface.co/spaces/{space}")
+    elif is_render:
+        platform = f"Render.com — {os.getenv('RENDER_SERVICE_NAME', 'powerguard')}"
+        service_url = os.getenv("RENDER_EXTERNAL_URL", "")
+    else:
+        platform = "Local Development"
+        service_url = "http://127.0.0.1:8000"
 
     return {
         "environment": "cloud" if is_cloud else "local",
         "platform": platform,
         "deployment_env": env,
-        "region": os.getenv("RENDER_REGION", "local"),
-        "service_url": os.getenv("RENDER_EXTERNAL_URL", "http://127.0.0.1:8000"),
+        "region": os.getenv("RENDER_REGION", os.getenv("SPACE_REGION", "local")),
+        "service_url": service_url,
         "containerized": True,
         "last_checked": datetime.utcnow().isoformat() + "Z",
     }
@@ -50,10 +60,16 @@ def get_course_cloud_concepts() -> dict:
                         "verdict": "Best for corporate environments",
                     },
                     {
-                        "option": "Render.com + Docker (SELECTED)",
-                        "pros": ["Free tier", "No credit card for basic deploy", "Docker-native", "Auto-deploy from GitHub", "Fast setup for semester project"],
-                        "cons": ["Free tier spins down after 15 min idle", "750 hours/month limit", "Less control than AWS"],
-                        "verdict": "SELECTED — optimal for free academic deployment",
+                        "option": "Hugging Face Spaces + Docker (SELECTED)",
+                        "pros": ["Completely free", "No credit card required", "Docker-native", "16GB RAM free tier", "Perfect for ML projects", "Public URL for presentation"],
+                        "cons": ["Sleeps when idle", "Storage not persistent on free tier"],
+                        "verdict": "SELECTED — best free option without credit card",
+                    },
+                    {
+                        "option": "Render.com + Docker",
+                        "pros": ["Free tier", "Docker-native", "Auto-deploy from GitHub"],
+                        "cons": ["Requires credit card for verification", "Sleeps after 15 min idle"],
+                        "verdict": "Alternative if card available",
                     },
                 ],
                 "architecture_decision": "Containerized microservice architecture: single Docker image containing FastAPI API + ML model + SQLite DB, deployable to any cloud provider.",
