@@ -15,7 +15,8 @@ def get_storage_dir() -> Path:
     """Writable storage path (HF Spaces /app is read-only at runtime)."""
     if custom := os.environ.get("POWERGUARD_STORAGE"):
         return Path(custom)
-    if os.environ.get("DEPLOYMENT_ENV") == "cloud":
+    env = os.environ.get("DEPLOYMENT_ENV", "local")
+    if env in ("cloud", "aws-cloud", "aws"):
         return Path("/tmp/powerguard-storage")
     return ROOT / "storage"
 
