@@ -42,7 +42,7 @@ def get_storage_stats() -> dict:
 
 def get_cloud_architecture() -> dict:
     return {
-        "platform": "Render.com (Free Tier) / Docker",
+        "platform": "Hugging Face Spaces (Free, No Card) / Render / Docker",
         "deployment_model": "Containerized cloud deployment",
         "services": [
             {
@@ -101,7 +101,7 @@ def get_cloud_architecture() -> dict:
             "Scalable architecture — add regions without hardware changes",
             "99.9% uptime with cloud hosting vs local machine dependency",
         ],
-        "supported_providers": ["Render.com", "AWS (EC2 + S3 + RDS)", "Google Cloud Run", "Microsoft Azure App Service"],
+        "supported_providers": ["Hugging Face Spaces", "Render.com", "AWS (EC2 + S3 + RDS)", "Google Cloud Run", "Microsoft Azure App Service"],
     }
 
 

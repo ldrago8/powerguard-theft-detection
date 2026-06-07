@@ -13,7 +13,8 @@ We evaluated four cloud platforms:
 | AWS (EC2+S3+RDS) | Industry standard, massive scale | Complex, credit card required | Enterprise production |
 | Google Cloud | Serverless, strong ML | Billing complexity | ML-heavy workloads |
 | Microsoft Azure | Enterprise integration | Setup overhead | Corporate environments |
-| **Render.com + Docker** | **Free, no credit card, fast setup** | **Sleeps after 15 min idle** | **✓ SELECTED** |
+| **Render.com + Docker** | Free tier | **Requires credit card** | Alternative only |
+| **Hugging Face Spaces + Docker** | **Free, no card, 16GB RAM** | Sleeps when idle | **✓ SELECTED** |
 
 **Architecture Decision:** Containerized microservice — single Docker image with FastAPI + ML + Database, deployable to any cloud.
 
@@ -125,7 +126,7 @@ We evaluated four cloud platforms:
 3. Docker image built (pip + dataset + ML training)
 4. Container deployed to cloud VM
 5. Health check at /api/health
-6. Public URL: https://powerguard-theft-detection.onrender.com
+6. Public URL: `https://YOUR_USERNAME-powerguard-theft-detection.hf.space`
 
 **CI/CD:** GitHub push → Render auto-build → Docker deploy → Health check → Live
 
